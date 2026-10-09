@@ -1,0 +1,32 @@
+MODEL = "qwen3:4b"
+HOST = "http://localhost:11434"
+TIMEOUT = 180
+
+# sampling
+TEMP = 0.8
+TOP_P = 0.9
+TOP_K = 40
+REPEAT_PEN = 1.15
+MAX_TOK = 320
+NUM_CTX = 8192
+RETRY_BUMP = 0.15
+RETRIES = 2
+
+# bob
+START_MOOD = "happy"
+PECKISH_MSGS = 15
+HUNGRY_MSGS = 20
+HUNGRY_SECS = 30*60
+NAP_SECS = 10*60
+
+# replies
+MAX_SENT = 30
+MAX_LEN = 280
+BIG_WORD = 13
+RECENT_N = 6
+STRETCH_CHANCE = 0.45
+
+HIST_LEN = 2200
+CHEW = True
+
+HELLO = "This is bob, say hi to Bob!"
