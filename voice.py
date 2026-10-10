@@ -73,7 +73,7 @@ def dedupe(txt, recent):
     old = [o for o in old if len(o) > 12]
     parts = SENT.findall(txt)
     # asking for a sorry is allowed again and again, that's the point
-    keep = [p for p in parts if re.search(r"sor+y", p, re.I) or not any(_plain(p) == o or (len(o) > 25 and difflib.SequenceMatcher(None, _plain(p), o).ratio() > 0.85) for o in old)]
+    keep = [p for p in parts if re.search(r"sor+y", p, re.I) or not any(_plain(p) == o or (len(o) > 25 and difflib.SequenceMatcher(None, _plain(p), o).ratio() > 0.75) for o in old)]
     if keep and len(keep) < len(parts) and len(" ".join(keep).split()) >= 4:
         return _quotes("".join(keep).strip())
     return txt
@@ -156,3 +156,42 @@ def no_name_start(txt, recent, name):
         if len(rest.split()) >= 3:
             return rest[0].upper() + rest[1:]
     return txt
+
+
+STOP = set("""i a an the to and is it my you your me so of in on that this it's i'm was be are with for what do
+but at we he she they not can just like have has oh ooh wow yes no""".split())
+
+
+# two-word bits that keep coming back ("snack monster", "my tummy")
+def overused(recent):
+    seen = {}
+    for r in list(recent)[-5:]:
+        w = re.findall(r"[a-z']+", unstretch(r).lower())
+        for g in sorted(set(zip(w, w[1:]))):
+            if not set(g) <= STOP:
+                seen[g] = seen.get(g, 0) + 1
+    return [" ".join(g) for g, n in sorted(seen.items()) if n >= 3]
+
+
+# "...and guess what?" with nothing after it
+def no_hanging(txt):
+    out = re.sub(r"\s*(and\s+)?(guess what|you know what)\W*$", "", txt, flags=re.I).strip()
+    return out if len(out.split()) >= 3 else txt
+
+
+# "hellooo beta!" - he's the kid, grown-ups call HIM beta
+def no_beta(txt):
+    txt = re.sub(r"\b((?:hi+|hel+o+|hey+|bye+|ok(?:ay)?)\W*?)[ ,]+beta\b", r"\1", txt, flags=re.I)
+    return re.sub(r",\s*beta(?=\s*[!?.])", "", txt, flags=re.I)
+
+
+# they: "i ate a whole cloud"  bob: "I ate a whole cloud too!"
+def mirrors(txt, msg):
+    m = re.search(r"\bi(?:'m| am|m)?\s+(?:a |now )?(ate|am|turned into|drank|have|got|became|built|made|did|found|saw|grow|grew|lost|broke|fell|won|went|wrote|work|worked|used to)\s+(?:a |an |the )?(\w+(?: \w+)?)", (msg or "").lower())
+    if not m:
+        return False
+    verb, thing = m.group(1), m.group(2)
+    low = (txt or "").lower()
+    v = verb if verb not in ("built", "made") else "built|made"
+    return bool(re.search(rf"\bi(?:'m| am)?\s+(?:{v}|a|an)\s+(?:a |an |the |it |one )?(?:\w+ )?{re.escape(thing.split()[0])}", low)) and \
+        "you" not in low.split(thing.split()[0])[0][-30:]
