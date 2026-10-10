@@ -2,14 +2,14 @@ MODEL = "qwen3:4b"
 HOST = "http://localhost:11434"
 TIMEOUT = 180
 
-# sampling
-TEMP = 0.8
-TOP_P = 0.9
+#sampling
+TEMP = 0.9
+TOP_P = 0.95
 TOP_K = 40
-REPEAT_PEN = 1.15
+MIN_P = 0.05    
 MAX_TOK = 320
 NUM_CTX = 8192
-RETRY_BUMP = 0.15
+RETRY_BUMP = 0.1
 RETRIES = 2
 
 # bob
