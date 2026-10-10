@@ -4,7 +4,6 @@ import config, food, manners
 from sprites import MOODS
 
 
-# different ways a hurt little kid shows it, one per turn
 SAD_WAYS = [
     "he says quietly that the words hurt his feelings and asks for a sorry",
     "he hides under his blanket and talks from under it, all muffled",
@@ -24,9 +23,10 @@ class Mood:
         self.fed_at = clock()
         self.seen_at = clock()
         self.upset = False
-        self.hint = False    # did we just tell the brain he's getting hungry
-        self.maybe_mean = 0  # times in a row only the model thought it was mean
-        self.sad_n = 0       # so he doesn't cry the same way twice
+        self.hint = False 
+        self.maybe_mean = 0 
+        self.sad_n = 0
+        self.game = False
 
     @property
     def asleep(self):
@@ -53,15 +53,13 @@ class Mood:
             return True
         return False
 
-    # events -> (forced mood, what's happening)
-
     def chat(self, msg):
         was_asleep = self.asleep
         self.msgs += 1
         notes, forced = [], None
         self.hint = False
 
-        m = manners.judge(msg)
+        m = manners.judge(msg, self.game)
         if m == "sorry" and self.upset:
             self.upset = False
             forced = "happy"
@@ -101,6 +99,8 @@ class Mood:
         kind, note = food.note(item, was_hungry)
         if kind == "pulao":
             return ("crying" if was_hungry or self.upset else "sad"), note
+        if kind == "thing":
+            return ("crying" if was_hungry else None), note
         if kind == "veggie":
             return "eating", note    # one brave bite doesn't fill a tummy
         self.msgs = 0
@@ -113,17 +113,17 @@ class Mood:
         return "sleeping", "Bob is going to sleep now. He says something very sleepy."
 
     def settle(self, forced, picked, mean=False, sorry=False, msg=None):
-        # the model noticed something the word lists missed
+
         if sorry and msg is not None and not manners.apology(msg.lower()):
             sorry = False
-        if mean and msg is not None and manners.GAME.search(msg.lower()) and manners.judge(msg) != "mean":
-            mean = False    # game trash talk
+        if mean and msg is not None and (manners.GAME.search(msg.lower()) or self.game) and manners.judge(msg, self.game) != "mean":
+            mean = False
         if mean and msg is not None and not manners.at_bob(msg):
             mean = False
             if forced is None and picked == "crying":
                 picked = "sad"
         if mean and not self.upset and forced != "eating":
-            # the model alone isn't sure enough. sad once, upset if it keeps happening
+
             self.maybe_mean += 1
             if self.maybe_mean >= 2:
                 self.upset = True
