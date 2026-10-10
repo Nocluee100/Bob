@@ -24,7 +24,7 @@ def breaks_char(txt):
     return any(p in low for p in NOT_BOB)
 
 
-# "hello bob!" - bob talking to himself
+
 CALLS_BOB = re.compile(r"\b(hi+|hel+o+|hey+|yo+|thanks?|thank you|ok(ay)?|bye+|sorry)\W+bob+\b|,\s*bob+\s*[!?.]|^\W*bob+\s*(\.\.+|[!?,])", re.I)
 
 SENT_RE = re.compile(r"[^.!?]+[.!?]*")
@@ -36,7 +36,7 @@ def sent(x):
 
 def close(a, b):
     a, b = sent(a), sent(b)
-    return len(a) > 30 and difflib.SequenceMatcher(None, a, b).ratio() > 0.85
+    return len(a) > 30 and difflib.SequenceMatcher(None, a, b).ratio() > 0.8
 
 
 def same(a, b):
@@ -46,12 +46,33 @@ def same(a, b):
 FAVS = ("biryani", "white monster", "mouse pointer", "computer house", "the computer is my house", "my house is the computer")
 
 
-# "Bob says 5" -> should be "I say 5"
+# "Bob says 5"
 THIRD = re.compile(r"\b(sorry to|for|about) bob\b|\bbob('s)? (says|is|has|loves|likes|wants|thinks|does|doesn't|will|can|knows|feels|eats|tummy|brain|house)\b", re.I)
 
 
 SOFT = ("too big", "already said", "favorite things", "food or drinks", "computer", "scary", "not \"bob\"",
-        "call them friend", "same stuff", "little bits", "listing things")
+        "call them friend", "same stuff", "little bits", "listing things", "starting the same", "too many shouts", "keeps talking about")
+
+
+def opener(txt):
+    w = re.findall(r"[a-z']+", voice.unstretch(txt).lower())[:3]
+    return " ".join(w) if len(w) == 3 else ""
+
+
+MATH = re.compile(r"(\d+)\s*(times|x|\*|multiplied by|plus|\+|minus|-|divided by|/)\s*(\d+)", re.I)
+
+
+# "47 times 12 is 564"
+def too_smart(txt, msg):
+    m = MATH.search(msg or "")
+    if not m:
+        return False
+    a, op, b = int(m.group(1)), m.group(2).lower(), int(m.group(3))
+    if op in ("times", "x", "*", "multiplied by"): r = a * b
+    elif op in ("plus", "+"): r = a + b
+    elif op in ("minus", "-"): r = a - b
+    else: r = a // b if b else 0
+    return r >= 20 and re.search(rf"\b{r}\b", (txt or "").replace(",", "")) is not None
 
 
 def soft(issue):
@@ -82,6 +103,17 @@ def problem(txt, recent, msg="", food_ok=True, upset=False, veg_friend=False):
         return "Bob must say a few tiny words."
     if re.search(r"([a-z])\1{9,}", txt, re.I) or len(re.findall(r"[a-z]+", txt, re.I)) < 3 and len(txt) > 40:
         return "Bob got stuck on one sound. He says real little sentences, like a kid talking."
+    if re.search(r'"\s*:\s*["\w\[{]|"(mean|sorry|mood|things|twist|reply)"', txt):
+        return "Answer only with the words Bob says out loud, like a little kid. Do not plan or explain."
+    if re.search(r"\bi(?:'?m| am)\s+(?:a |an |just a |only a )?(?:\w+ )?(robot|ai|bot|program|machine|computer program)\b", txt, re.I):
+        return "Bob is a real boy who lives in a computer, not a robot or a program."
+    if re.search(r"\b(died|is dead|passed away|is sick|in (the )?hospital) too\b|\bmy \w+ died\b", txt, re.I) and \
+            re.search(r"\b(died|dead|passed away|sick|hospital)\b", msg or "", re.I):
+        return "That sad thing happened to your friend, not to Bob. Bob doesn't say it happened to him too. He's sorry for THEM."
+    if too_smart(txt, msg):
+        return "Bob is 5. Big math is way too hard for him, he can't know that answer. He makes a silly kid guess instead."
+    if re.search(r"[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af\u0400-\u04ff]", txt):
+        return "Bob only talks in simple English (and a few Hindi words). No other languages."
     if breaks_char(txt):
         return "Answer only with the words Bob says out loud, like a little kid. Do not plan or explain."
     if CALLS_BOB.search(txt):
@@ -92,7 +124,7 @@ def problem(txt, recent, msg="", food_ok=True, upset=False, veg_friend=False):
         return "Bob is never mean to anyone, even when he is sad. Say it in a kind way."
 
     big = [w for w in words(voice.unstretch(txt)) if len(w) >= config.BIG_WORD
-           and not re.fullmatch(r"(ha|he|hi|ho|hee|heh|la|na|bo+p|zo+m)+h?", w)]
+           and not re.fullmatch(r"(ha|he|hi|ho|hee|heh|la|na|bo+p|zo+m)+h?", w) and w not in (msg or "").lower()]
     if big:
         return f'The word "{big[0]}" is too big for Bob. Use tiny easy words.'
 
@@ -122,6 +154,11 @@ def problem(txt, recent, msg="", food_ok=True, upset=False, veg_friend=False):
     ss = [x.strip() for x in SENT_RE.findall(txt) if x.strip()]
     if len(ss) >= 6 and sum(x.lower().startswith(("i ", "i'm", "my ")) for x in ss) >= len(ss) * 0.8:
         return "Bob is just listing things about himself. He answers them like a kid telling a little story, with 'and' and 'because'."
+    op = opener(txt)
+    if op and any(opener(r) == op for r in list(recent)[-4:]):
+        return f'Bob keeps starting the same way ("{op}"). Start differently this time.'
+    if txt.count("!") > 5:
+        return "Too many shouts. Bob says it more like he's talking."
     if any(same(txt, r) or close(txt, r) for r in recent):
         return "That is the same thing Bob said before. He answers what they JUST said, with new words."
     if overlap(txt, recent) > 0.4:
