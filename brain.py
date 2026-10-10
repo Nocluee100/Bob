@@ -10,9 +10,11 @@ SHAPE = {
         "mean": {"type": "boolean"},
         "sorry": {"type": "boolean"},
         "mood": {"type": "string", "enum": list(MOODS)},
+        "things": {"type": "string"},
+        "twist": {"type": "string"},
         "reply": {"type": "string"},
     },
-    "required": ["mean", "sorry", "mood", "reply"],
+    "required": ["mean", "sorry", "mood", "things", "twist", "reply"],
 }
 
 
@@ -51,7 +53,7 @@ def body(msgs, temp=None):
             "temperature": temp or config.TEMP,
             "top_p": config.TOP_P,
             "top_k": config.TOP_K,
-            "repeat_penalty": config.REPEAT_PEN,
+            "min_p": config.MIN_P,
             "num_predict": config.MAX_TOK,
             "num_ctx": config.NUM_CTX,
         },
