@@ -58,7 +58,7 @@ GAME = re.compile(r"\b(1v1|1 v 1|game|games|gaming|minecraft|bedwars|fortnite|ro
                   r"match|play|playing|at (cricket|football|tag|hide and seek)|gg|noob|level|round)\b")
 
 
-def _mean(low):
+def _mean(low, game=False):
     if any(_has(p, low) for p in MEAN_PHRASES):
         return True
     if any(_has(g, low) for g in GAALI) or HINDI_RE.search(low):
@@ -66,7 +66,7 @@ def _mean(low):
     if CRUEL_RE.search(low):
         return True
     # "1v1 me, ill destroy you" is banter, not a threat
-    if THREAT_RE.search(low) and not GAME.search(low):
+    if THREAT_RE.search(low) and not GAME.search(low) and not game:
         return True
     return bool(AT_YOU.search(low) or NAME_CALL.search(low))
 
@@ -89,11 +89,12 @@ def apology(low):
     return any(s in low for s in SORRY) and not NOT_SORRY.search(low)
 
 
-def judge(msg):
+def judge(msg, game=False):
+    """game: they were just talking about a game, so 'ill destroy u' is banter"""
     low = (msg or "").lower()
     if apology(low):
         return "sorry"
-    if _mean(low) or NOT_SORRY.search(low):
+    if _mean(low, game) or NOT_SORRY.search(low):
         return "mean"
     return None
 
