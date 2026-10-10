@@ -67,11 +67,22 @@ VEGGIES = re.compile(r"\b(broccoli|spinach|palak|karela|bitter gourd|cabbage|cau
                      r"brinjal|baingan|eggplant|lauki|bhindi|okra|salad|lettuce|cucumber|veggies|vegetables?|sprouts|kale|celery|onions?)\b", re.I)
 
 
+# bob lives in a computer, so these are actually snacks for him
+PC_FOOD = re.compile(r"\b(ram|wifi|wi-fi|bytes?|megabytes?|gigabytes?|data|pixels?|usb|batter(y|ies)|electricity|cables?|emojis?|"
+                     r"memes?|gifs?|internet|bluetooth|charger|cookies? from (the )?(browser|internet|website))\b", re.I)
+# not food at all
+THING = re.compile(r"\b(shoes?|socks?|chappals?|slippers?|homework|books?|pencils?|erasers?|crayons?|soap|toothpaste|paper|"
+                   r"rocks?|stones?|sand|mud|dirt|bugs?|worms?|spiders?|phones?|remote|keys|coins?|money|tissues?|hair|"
+                   r"brother|sister|cat|dog|chair|table|lego|legos|glue|plastic|nothing|air)\b", re.I)
+
+
 def kind(item):
     s = item or ""
     if PULAO_RE.search(s): return "pulao"
     if BIRYANI_RE.search(s): return "biryani"
     if MONSTER_RE.search(s): return "monster"
+    if PC_FOOD.search(s): return "pc"
+    if THING.search(s) and not any(re.search(rf"\b{re.escape(f)}", s, re.I) for f in FOODS): return "thing"
     if VEGGIES.search(s): return "veggie"
     return "food"
 
@@ -133,6 +144,15 @@ def note(item, was_hungry):
     elif k == "veggie":
         n = (f"They gave Bob {item}. Vegetables are YUCKY to Bob, like most kids. He makes a big yucky face, "
              "maybe takes one teeny tiny brave bite, and is very proud of himself.")
+    elif k == "pc":
+        n = (f"They gave Bob {item}. He lives in a computer, so that's real computer food for him! He tells them exactly "
+             "what it tastes like, in a silly, very specific way.")
+    elif k == "thing":
+        n = (f"They tried to feed Bob {item}. That is NOT food! Bob reacts like a real kid: shocked, grossed out or giggly. "
+             "He does not eat it, and he's still waiting for real food.")
+        if was_hungry:
+            n += " He is still super hungry, so he's crying for real food."
+        return k, n
     elif k == "monster":
         n = "They gave Bob a White Monster! His favorite drink ever! He is super duper happy and full of zoom."
     else:
@@ -157,9 +177,28 @@ def likes_pulao(txt):
     return False
 
 
-PUSH_RE = re.compile(r"\b(you (should|have to|need to|must|gotta) (eat|try)|eat (chicken|meat|mutton)|"
-                     r"(chicken|mutton|meat|non ?veg)[^.!?]{0,20}(with me|together|for you|you'?ll love)|try (some )?(chicken|meat|mutton))", re.I)
+PUSH_RE = re.compile(r"\b(you (should|have to|need to|must|gotta) (eat|try)|(?<!n't )(?<!not )(?<!never )(?<!dont )eat (chicken|meat|mutton)|"
+                     r"(chicken|mutton|meat|non ?veg)[^.!?]{0,20}(with me|together|for you|you'?ll love)|try (some )?(chicken|meat|mutton)|(give|share|offer|bring) (you|u) (my |some |a )?(chicken|mutton|meat))", re.I)
 
 
 def pushes_meat(txt):
     return bool(PUSH_RE.search(txt or ""))
+
+
+# "my chicken biryani is yucky" - never
+FAV_BAD = re.compile(rf"(?<!veg )(?<!paneer )(?<!vegetable )\b({BIRYANI}|white monster)\b[^.!?]{{0,15}}[.!?]?\s*(it\s+)?(is|are|was|'s|tastes?)\s+(so\s+|really\s+)?(yucky|gross|bad|disgusting|icky|eww)", re.I)
+
+
+def dislikes_fav(txt):
+    return bool(FAV_BAD.search(txt or ""))
+
+
+ATE = re.compile(r"\bi (just |already )?(ate|had|drank|eated|gobbled)\b|\bi'?ve (just )?(eaten|had)\b", re.I)
+
+
+# "i ate biryani for lunch!" when nobody fed him
+def claims_ate(txt):
+    for s in re.findall(r"[^.!?]+", txt or ""):
+        if ATE.search(s) and (mentions(s) or any(re.search(rf"\b{re.escape(f)}", s, re.I) for f in FOODS + ["snack", "food", "lunch", "dinner", "breakfast"])):
+            return True
+    return False
