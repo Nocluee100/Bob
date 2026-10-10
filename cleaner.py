@@ -39,7 +39,6 @@ MOOD_RE = re.compile(r'"mood"\s*:\s*"(\w+)"')
 FLAG_RE = r'"{}"\s*:\s*true'
 
 
-# cut off json (ran out of tokens) - grab what we can
 def broken_json(txt):
     m = REPLY_RE.search(txt)
     if not m:
@@ -70,7 +69,7 @@ def from_json(txt):
     return to_mood(d.get("mood")), d["reply"], flags
 
 
-# old style replies: "[happy] hi" / "Bob (happy): hi"
+# "[happy] hi" / "Bob (happy): hi"
 def from_plain(txt):
     mood = None
     m = WHO_RE.match(txt)
@@ -90,7 +89,7 @@ def from_plain(txt):
     return mood, txt, {"mean": False, "sorry": False}
 
 
-# "Computer you! Computer you! Computer you!" -> once
+# "Computer you! Computer you! Computer you!"
 def unloop(txt):
     out = []
     for s in re.findall(r"[^.!?]+[.!?]*", txt):
