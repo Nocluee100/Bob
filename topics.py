@@ -253,7 +253,7 @@ def _build():
 
 ALL = _build()
 
-BED_RE = re.compile(r"\b(time for bed|go to (sleep|bed)|bed ?time(?! stor)|good ?night|nap time|go nap|sleep now|time to sleep)\b", re.I)
+BED_RE = re.compile(r"\b(time for bed|go to (sleep|bed)|bed ?time(?! stor)|good ?night|nap time|go nap|sleep now|time to sleep|so ja+o|so ja+|soja+o|sone ja|shubh ratri)\b", re.I)
 
 
 def bedtime(msg):
