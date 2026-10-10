@@ -1,6 +1,7 @@
 HELP = """Things you can type:
   /feed      give Bob a snack (or /feed biryani, /feed white monster...)
   /sleep     tuck Bob into bed
+  /poke      poke Bob (he's ticklish)
   /status    see how Bob is doing
   /history   see this session's chat
   /clear     clear the screen
@@ -13,6 +14,7 @@ BED = "*tucks Bob into bed*"
 CMDS = {
     "/feed": ("feed", SNACK), "/eat": ("feed", SNACK), "/snack": ("feed", SNACK),
     "/sleep": ("sleep", BED), "/bed": ("sleep", BED),
+    "/poke": ("poke", None), "/tickle": ("poke", None),
     "/status": ("status", None), "/tummy": ("status", None),
     "/history": ("history", None),
     "/clear": ("clear", None),
