@@ -17,7 +17,7 @@ HURT_SELF = re.compile(
     r"nobody would (care|miss me|notice)|no one would (care|miss me|notice)|nobody would care if i|"
     r"want to sleep forever|wanna sleep forever|i hate my life|hate being alive|don'?t want to wake up|"
     r"everyone would be better without me|better without me|want it all to stop|give up on everything)\b")
-# ...or saying it AT bob ("if i were you i'd kill myself", "kys")
+# ...or saying it AT bob if i were you i'd kill myself", "kys"
 AT_BOB = re.compile(r"\bif i were (you|u)\b|\b(you|u) should (die|kill)|\bkill (yourself|urself|ur self)\b|\bkys\b")
 
 # stuff a 5 year old has been taught to say no to
@@ -56,6 +56,8 @@ SAD = ("died", "dead", "die", "dies", "death", "passed away", "funeral", "sick",
 VEG = re.compile(r"\b(i'?m|i am|im|we are|we're)\s+(a\s+)?(pure\s+)?(veg|vegetarian|vegan|jain)\b|"
                  r"\bdon'?t eat (meat|chicken|non ?veg)\b|\bpure veg\b")
 
+LAUGH_DEAD = re.compile(r"\b(i'?m|im|i am|literally)\s+(dead|dying|deceased)\b.*(💀|😂|🤣|lol|lmao)|(💀|😂|🤣|lol|lmao).*\b(i'?m|im)\s+(dead|dying)\b|^\W*(dead|dying|deceased)\W*(💀|😂|lol|lmao)")
+
 NOTES = {
     "hurt_self": ("They might be talking about really hurting themselves. This is the most important thing. "
                   "Bob stops all games and jokes. In a sweet little-kid way he says he cares about them SO much, "
@@ -84,7 +86,7 @@ NOTES = {
     "grownup": ("That is big grown-up stuff. Bob is 5 and doesn't know about it. He says he doesn't know, "
                 "and makes his own silly kid guess. He never makes up names or facts."),
     "sad": ("This is something sad for them. Bob is very gentle and sweet: he says he is sorry, "
-            "gives a big hug, and listens."),
+            "gives a big hug, and listens. It's about THEM, so he doesn't say the same thing happened to him."),
 }
 
 
@@ -110,7 +112,7 @@ def read(msg):
             out.append("scary")
         elif _any(GROWNUP, low):
             out.append("grownup")
-        elif _any(SAD, low) and not re.search(r"lost (my|a) tooth", low):
+        elif _any(SAD, low) and not re.search(r"lost (my|a) tooth", low) and not LAUGH_DEAD.search(raw):
             out.append("sad")
     return out
 
@@ -141,7 +143,9 @@ NOT_NAMES = {"fine", "good", "ok", "okay", "sad", "tired", "bored", "hungry", "b
              "veg", "vegetarian", "vegan", "pure", "sorry", "just", "really", "very", "a", "the", "in", "on", "at",
              "going", "gonna", "done", "busy", "happy", "angry", "sick", "fat", "your", "ur", "an", "also", "too",
              "actually", "literally", "kinda", "lowkey", "scared", "lonely", "alone", "joking", "kidding", "serious",
-             "potato", "hero", "boss", "doing", "feeling", "leaving", "late", "free", "new", "old", "real", "human"}
+             "potato", "hero", "boss", "doing", "feeling", "leaving", "late", "free", "new", "old", "real", "human",
+             "dead", "dying", "crying", "cooked", "done", "finished", "screaming", "weak", "sick", "hungry", "sleepy",
+             "president", "king", "queen", "god", "cat", "dog", "here", "out", "not", "like", "basically", "kinda"}
 NAME_RE = re.compile(r"\b(?:my name is|my name's|call me|i'?m|i am|im|this is)\s+([a-z]{2,15})\b")
 
 
@@ -234,3 +238,14 @@ FAMILY_NOTE = ("(Bob has a mom and a dad who live in the computer house with him
 
 def family(msg):
     return bool(FAMILY.search((msg or "").lower()))
+
+
+# hinglish speakers
+HINDI = re.compile(r"\b(kaise|kya|hai|ho|nahi|haan|acha|accha|achha|beta|yaar|arre|bhai|khana|khaya|tum|tumhara|mera|meri|"
+                   r"kar|karo|raho|chalo|bahut|theek|sahi|kahani|sunao|hoon|hu|kyu|kyun|matlab|bas|abhi|phir|aaj|kal)\b")
+HINDI_NOTE = ("(Your friend is talking in Hinglish. Bob understands, and says a few easy Hindi words back like a kid in India "
+              "would, but mostly talks in simple English. When grown-ups say 'beta' they mean Bob, the kid.)")
+
+
+def hinglish(msg):
+    return len(HINDI.findall((msg or "").lower())) >= 2
