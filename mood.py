@@ -23,8 +23,8 @@ class Mood:
         self.fed_at = clock()
         self.seen_at = clock()
         self.upset = False
-        self.hint = False 
-        self.maybe_mean = 0 
+        self.hint = False
+        self.maybe_mean = 0
         self.sad_n = 0
         self.game = False
 
@@ -52,6 +52,7 @@ class Mood:
             self.mood = "sleeping"
             return True
         return False
+
 
     def chat(self, msg):
         was_asleep = self.asleep
@@ -102,7 +103,7 @@ class Mood:
         if kind == "thing":
             return ("crying" if was_hungry else None), note
         if kind == "veggie":
-            return "eating", note    # one brave bite doesn't fill a tummy
+            return "eating", note
         self.msgs = 0
         self.fed_at = self.clock()
         if self.upset:
@@ -113,7 +114,6 @@ class Mood:
         return "sleeping", "Bob is going to sleep now. He says something very sleepy."
 
     def settle(self, forced, picked, mean=False, sorry=False, msg=None):
-
         if sorry and msg is not None and not manners.apology(msg.lower()):
             sorry = False
         if mean and msg is not None and (manners.GAME.search(msg.lower()) or self.game) and manners.judge(msg, self.game) != "mean":
@@ -123,7 +123,6 @@ class Mood:
             if forced is None and picked == "crying":
                 picked = "sad"
         if mean and not self.upset and forced != "eating":
-
             self.maybe_mean += 1
             if self.maybe_mean >= 2:
                 self.upset = True
