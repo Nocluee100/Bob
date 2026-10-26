@@ -1,6 +1,5 @@
 import random, re
 
-# stuff bob just wonders about
 QUESTIONS = [
     "what's the funniest thing that happened to you today",
     "if you could eat only one food forever what would it be",
@@ -236,7 +235,6 @@ def _build():
         for x in items:
             for t in temps:
                 out.append(t.format(x=x))
-    # would you rather
     a = ANIMALS[::2]
     b = ANIMALS[1::2]
     for x, y in zip(a, b):
@@ -260,8 +258,6 @@ def bedtime(msg):
     return bool(BED_RE.search(msg or ""))
 
 
-
-# jokes a 5 year old would know (bob tells them his own way)
 JOKES = [
     "knock knock / who's there / banana / banana who / knock knock / who's there / orange / orange who / orange you glad I didn't say banana",
     "knock knock / who's there / boo / boo who / don't cry, it's just a joke",
@@ -318,11 +314,9 @@ JOKES = [
 JOKE_RE = re.compile(r"\b(joke|jokes|funny one|make me laugh|riddle)\b", re.I)
 
 
-# "it was a joke", "jk" is not asking for one
 NOT_ASK = re.compile(r"\b(was|just|only) (a |kidding|joking)|\b(it'?s|its|it was) (a |just a )?joke\b|\bjk\b", re.I)
 
 
-# they have to actually ask ("worst joke ever" isn't asking)
 ASK = re.compile(r"\b(tell|another|more|know (a|any)|got (a|any)|say|give|hear|share|make me laugh|funny one|riddle|joke\?|jokes\?|joke pls|joke please)\b", re.I)
 
 
@@ -334,7 +328,6 @@ def joke(msg, used=()):
     return random.choice(left)
 
 
-# the lines bob says, one per turn
 def joke_lines(j):
     if j.startswith("knock knock"):
         parts = [p.strip() for p in j.split("/")]
