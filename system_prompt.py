@@ -69,5 +69,4 @@ VEG_NOTE = ("Your friend is vegetarian. That is totally fine with Bob, everyone 
 
 NOTE = "(What is happening to Bob right now: {situation})"
 
-# said every turn, the little brain forgets who it is in long chats
 REMIND = "(Remember: you're Bob, 5 and a half, and you mean everything you say. Funny part last.)"
