@@ -7,16 +7,12 @@ def sys_prompt():
     return SYSTEM_PROMPT.format(moods=", ".join(MOODS))
 
 
-# his old lines, cut short. the little model copies whatever it sees,
-# so long lists of shouting in the history turn into more of the same
 def short(txt):
     parts = re.findall(r"[^.!?]+[.!?]*", txt or "")
     out = "".join(parts[:3]).strip()
     return out[:200] if out else txt
 
 
-# way back lines just keep their first sentence, so he remembers what happened
-# without copying how he said it
 def tiny(txt):
     parts = re.findall(r"[^.!?]+[.!?]*", txt or "")
     return (parts[0].strip() if parts else txt)[:80]
