@@ -2,7 +2,6 @@ import re, zlib, random, difflib
 
 import config
 
-# word -> how bob stretches it
 STRETCH = {
     "hello": "hellooooo", "hi": "hiiiii", "hey": "heyyyy", "yes": "yesss", "yeah": "yeahhh",
     "yay": "yaaaaay", "no": "nooooo", "so": "sooooo", "please": "pleeeease",
@@ -44,7 +43,6 @@ def kidify(txt):
     return txt[:m.start()] + new + txt[m.end():]
 
 
-# little phrases bob falls back on. fine once in a while, annoying every line
 TICS = [
     r"\by+a+y+\b|\bya+h+\b", r"\bi lo+ve (you|u)\b", r"\blet'?s play\b", r"\bi lo+ve (your|ur) ideas?\b",
     r"\bdo you want to (play|be|make|build)\b", r"\bcomputer house\b", r"\bpinky promise\b",
@@ -55,8 +53,7 @@ TICS = [
     r"\bno fair\b", r"\byucky\b", r"\bburps?\b", r"\bboogers?\b", r"\btoots?\b", r"\bbig hug\b", r"\bmoon\b", r"\brobot\b",
 ]
 TIC_RE = [re.compile(t, re.I) for t in TICS]
-TIC_RE.append(re.compile(r"\b[Ii] lo+ve [A-Z][a-z]+\b"))   # "I love Kabir!" every line
-# "my hamster says 'roar!'" is cute once, then it's a habit
+TIC_RE.append(re.compile(r"\b[Ii] lo+ve [A-Z][a-z]+\b"))
 ONCE = re.compile(r"\b\w+ (the \w+ )?says\b", re.I)
 SENT = re.compile(r"[^.!?]+[.!?]*")
 
@@ -67,19 +64,21 @@ def _plain(s):
     return re.sub(r"[^a-z ]", "", unstretch(s).lower()).strip()
 
 
-# a sentence he already said word for word (or nearly) gets dropped
 def dedupe(txt, recent):
     old = [_plain(p) for r in list(recent)[-config.RECENT_N:] for p in SENT.findall(r)]
     old = [o for o in old if len(o) > 12]
     parts = SENT.findall(txt)
-    # asking for a sorry is allowed again and again, that's the point
-    keep = [p for p in parts if re.search(r"sor+y", p, re.I) or not any(_plain(p) == o or (len(o) > 25 and difflib.SequenceMatcher(None, _plain(p), o).ratio() > 0.75) for o in old)]
+    keep = []
+    for p in parts:
+        x = _plain(p)
+        same = any(x == o or (len(o) > 25 and difflib.SequenceMatcher(None, x, o).ratio() > 0.75) for o in old)
+        if not same or re.search(r"sor+y", p, re.I):
+            keep.append(p)
     if keep and len(keep) < len(parts) and len(" ".join(keep).split()) >= 4:
         return _quotes("".join(keep).strip())
     return txt
 
 
-# don't cut a sentence if what's left leans on it ("...' but I drink it anyway")
 def _flows(parts, keep):
     for i, p in enumerate(parts):
         if p in keep and i and parts[i - 1] not in keep:
@@ -89,7 +88,6 @@ def _flows(parts, keep):
     return True
 
 
-# cutting a sentence can leave half a quote behind
 def _quotes(txt):
     out, open_ = [], False
     for k, ch in enumerate(txt):
@@ -100,7 +98,7 @@ def _quotes(txt):
             elif open_:
                 open_ = False
             elif before in ".!?,":
-                continue    # closing quote with nothing opened, left over from a cut
+                continue
         out.append(ch)
     txt = "".join(out)
     if open_:
@@ -119,7 +117,6 @@ def detic(txt, recent):
         keep = [p for p in parts if re.search(r"sor+y", p, re.I) or not any(t.search(p) for t in tired)]
         if keep and len(" ".join(keep).split()) >= 6 and _flows(parts, keep):
             txt = _quotes("".join(keep).strip())
-    # "a million" every other line gets boring
     if "a million" in txt.lower() and any("million" in r.lower() for r in last[-2:]):
         rng = random.Random(zlib.crc32(txt.encode()))
         txt = re.sub(r"\ba million\b", lambda m: rng.choice(BIG), txt, count=1, flags=re.I)
@@ -135,7 +132,6 @@ only even ever back time real wanna play nooo yesss heyy hiii feel help need loo
 hehe haha yummy yucky didn't can't isn't it's i'm you're that's what's let's""".split())
 
 
-# a word that keeps popping up in his last few lines ("blueberry" x4)
 def stuck_on(recent, said=""):
     seen = {}
     for r in list(recent)[-4:]:
@@ -146,7 +142,6 @@ def stuck_on(recent, said=""):
     return sorted(w for w, n in seen.items() if n >= 3 and w not in COMMON and w[:-1] not in said)
 
 
-# "Kabir! ..." at the start of every single line
 def no_name_start(txt, recent, name):
     if not name:
         return txt
@@ -162,7 +157,6 @@ STOP = set("""i a an the to and is it my you your me so of in on that this it's 
 but at we he she they not can just like have has oh ooh wow yes no""".split())
 
 
-# two-word bits that keep coming back ("snack monster", "my tummy")
 def overused(recent):
     seen = {}
     for r in list(recent)[-5:]:
@@ -173,25 +167,23 @@ def overused(recent):
     return [" ".join(g) for g, n in sorted(seen.items()) if n >= 3]
 
 
-# "...and guess what?" with nothing after it
 def no_hanging(txt):
     out = re.sub(r"\s*(and\s+)?(guess what|you know what)\W*$", "", txt, flags=re.I).strip()
     return out if len(out.split()) >= 3 else txt
 
 
-# "hellooo beta!" - he's the kid, grown-ups call HIM beta
 def no_beta(txt):
     txt = re.sub(r"\b((?:hi+|hel+o+|hey+|bye+|ok(?:ay)?)\W*?)[ ,]+beta\b", r"\1", txt, flags=re.I)
     return re.sub(r",\s*beta(?=\s*[!?.])", "", txt, flags=re.I)
 
 
-# they: "i ate a whole cloud"  bob: "I ate a whole cloud too!"
 def mirrors(txt, msg):
     m = re.search(r"\bi(?:'m| am|m)?\s+(?:a |now )?(ate|am|turned into|drank|have|got|became|built|made|did|found|saw|grow|grew|lost|broke|fell|won|went|wrote|work|worked|used to)\s+(?:a |an |the )?(\w+(?: \w+)?)", (msg or "").lower())
     if not m:
         return False
-    verb, thing = m.group(1), m.group(2)
+    verb, thing = m.group(1), m.group(2).split()[0]
     low = (txt or "").lower()
-    v = verb if verb not in ("built", "made") else "built|made"
-    return bool(re.search(rf"\bi(?:'m| am)?\s+(?:{v}|a|an)\s+(?:a |an |the |it |one )?(?:\w+ )?{re.escape(thing.split()[0])}", low)) and \
-        "you" not in low.split(thing.split()[0])[0][-30:]
+    v = "built|made" if verb in ("built", "made") else verb
+    if not re.search(rf"\bi(?:'m| am)?\s+(?:{v}|a|an)\s+(?:a |an |the |it |one )?(?:\w+ )?{re.escape(thing)}", low):
+        return False
+    return "you" not in low.split(thing)[0][-30:]
