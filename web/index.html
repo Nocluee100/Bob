@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bob</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #000;
+    --ink: #f4f4f4;
+    --dim: #7a7a7a;
+    --box: #141414;
+    --line: #2a2a2a;
+    --bob: #ffd84d;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Comic Sans MS", "Comic Neue", "Chalkboard SE", cursive;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* --- bob --- */
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px 0;
+    min-height: 0;
+  }
+  .pop, .move, .hop { display: inline-block; }
+  #bob {
+    margin: 0;
+    font: 700 clamp(18px, 4.6vw, 34px)/1.25 Menlo, Monaco, Consolas, "DejaVu Sans Mono", monospace;
+    color: var(--bob);
+    white-space: pre;
+    text-align: left;
+    transition: color .4s;
+  }
+  .pop.go { animation: pop .35s ease-out; }
+  @keyframes pop { 0% { transform: scale(.85); } 60% { transform: scale(1.12); } 100% { transform: scale(1); } }
+
+  .move.happy, .move.eating { animation: breathe 2.6s ease-in-out infinite; }
+  .move.sleeping { animation: breathe 4s ease-in-out infinite; opacity: .85; }
+  .move.sad { animation: droop 3.2s ease-in-out infinite; }
+  .move.crying { animation: shake .18s linear infinite; }
+  .move.hungry { animation: wobble 1.1s ease-in-out infinite; }
+  @keyframes breathe { 50% { transform: scale(1.025, 1.04); } }
+  @keyframes droop { 50% { transform: translateY(5px); } }
+  @keyframes shake { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+  @keyframes wobble { 25% { transform: rotate(-2deg); } 75% { transform: rotate(2deg); } }
+
+  .hop.on { animation: hop .32s ease-in-out infinite alternate; }
+  @keyframes hop { to { transform: translateY(-7px); } }
+
+  /* --- what he says --- */
+  #said {
+    width: min(860px, 100%);
+    margin-top: 28px;
+    min-height: 7.2em;
+    font-size: clamp(18px, 3.2vw, 26px);
+    line-height: 1.45;
+    text-align: center;
+    cursor: pointer;
+    overflow-wrap: anywhere;
+  }
+  #said .rest { visibility: hidden; }
+  #said .dim { color: var(--dim); }
+  #said pre {
+    display: inline-block;
+    margin: 0;
+    text-align: left;
+    color: var(--dim);
+    font: 13px/1.5 Menlo, Monaco, Consolas, monospace;
+    white-space: pre-wrap;
+    cursor: auto;
+  }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+  /* --- you --- */
+  footer { padding: 0 16px 22px; width: min(960px, 100%); margin: 0 auto; }
+  #note {
+    min-height: 2.6em;
+    color: var(--dim);
+    font-size: 14px;
+    text-align: center;
+    white-space: pre-line;
+  }
+  form { display: flex; gap: 8px; }
+  #box {
+    flex: 1;
+    min-width: 0;
+    background: var(--box);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    padding: 14px 16px;
+    font: inherit;
+    font-size: 18px;
+    outline: none;
+  }
+  #box:focus { border-color: #555; }
+  .btns { display: flex; gap: 8px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
+  button {
+    background: none;
+    color: var(--dim);
+    border: 1px solid var(--line);
+    padding: 7px 14px;
+    font: inherit;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  button:hover, button:focus-visible { color: var(--ink); border-color: #555; outline: none; }
+  form button { color: var(--ink); padding: 0 20px; font-size: 18px; }
+
+  #past {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.92);
+    display: none;
+    padding: 40px 16px;
+  }
+  #past.on { display: flex; flex-direction: column; align-items: center; }
+  #past pre {
+    flex: 1; overflow: auto; width: min(760px, 100%);
+    margin: 0 0 16px; padding: 20px;
+    border: 1px solid var(--line);
+    font: 15px/1.6 inherit; font-family: inherit;
+    white-space: pre-wrap;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .move, .hop.on, .pop.go { animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="pop" id="pop"><div class="move happy" id="move"><div class="hop" id="hop"><pre id="bob" aria-hidden="true"></pre></div></div></div>
+  <div id="said" title="click to skip"></div>
+  <div class="sr" aria-live="polite" id="sr"></div>
+</main>
+<footer>
+  <div id="note">(type /help to see what you can do)</div>
+  <form id="form" autocomplete="off">
+    <input id="box" maxlength="400" placeholder="Talk to Bob..." aria-label="Talk to Bob">
+    <button type="submit">Send</button>
+  </form>
+  <div class="btns">
+    <button data-say="/feed">feed</button>
+    <button data-say="/poke">poke</button>
+    <button data-say="/sleep">sleep</button>
+    <button data-say="/help">help</button>
+  </div>
+</footer>
+<div id="past"><pre id="pastTxt"></pre><button id="pastX">close</button></div>
+
+<script>
+const FACES = {happy: "^_^", sad: "._.", crying: "T_T", eating: "^o^", hungry: "o_o", sleeping: "-_-"};
+const COLS = {happy: "#ffd84d", sad: "#6fa8ff", crying: "#5fe3ff", eating: "#7dff8a", hungry: "#ff6b6b", sleeping: "#d68cff"};
+const TEARS = ["      ' '      ", "      ; ;      ", "      . .      ", "               "];
+const ZZZ = ["          z    ", "          zZ   ", "          zZz  ", "               "];
+const TYPE_MS = 45;
+
+const $ = id => document.getElementById(id);
+const bobEl = $("bob"), said = $("said"), note = $("note"), box = $("box");
+
+let id = null, mood = "happy", busy = false;
+let tick = 0, blink = 0, nextBlink = 30, grr = 0;
+let text = "", at = 0, timer = null, dots = null;
+
+// --- bob ---
+
+function face() {
+  let f = FACES[mood] || FACES.happy;
+  if (mood === "eating") f = tick % 4 < 2 ? "^o^" : "^O^";
+  if (blink > 0 && ["happy", "sad", "hungry"].includes(mood)) f = "-_-";
+  return f;
+}
+
+function draw() {
+  let top = "               ", low = "               ";
+  if (mood === "sleeping") top = ZZZ[Math.floor(tick / 5) % ZZZ.length];
+  if (mood === "eating" && tick % 10 < 6) top = "     nom nom   ";
+  if (mood === "hungry" && grr > 0) top = "    *grumble*  ";
+  if (mood === "crying") low = TEARS[Math.floor(tick / 2) % TEARS.length];
+  bobEl.textContent = top + "\n(     " + face() + "     )\n(>           <)\n" + low;
+}
+
+function loop() {
+  tick++;
+  if (blink > 0) blink--;
+  else if (--nextBlink <= 0) { blink = 2; nextBlink = 25 + Math.floor(Math.random() * 30); }
+  if (grr > 0) grr--;
+  else if (mood === "hungry" && Math.random() < .03) grr = 8;
+  draw();
+}
+setInterval(loop, 120);
+
+function setMood(m) {
+  if (!FACES[m]) m = "happy";
+  if (m !== mood) {
+    const p = $("pop");
+    p.classList.remove("go"); void p.offsetWidth; p.classList.add("go");
+  }
+  mood = m;
+  $("move").className = "move " + m;
+  bobEl.style.color = COLS[m];
+  draw();
+}
+
+// --- typing it out ---
+
+function show(t) {
+  clearTimeout(timer);
+  stopDots();
+  text = (t || "").trim();
+  at = 0;
+  $("sr").textContent = text;
+  said.innerHTML = '<span class="shown"></span><span class="rest"></span>';
+  said.lastChild.textContent = text;
+  $("hop").classList.add("on");
+  step();
+}
+
+function step() {
+  if (at >= text.length) {
+    $("hop").classList.remove("on");
+    return;
+  }
+  at++;
+  said.firstChild.textContent = text.slice(0, at);
+  said.lastChild.textContent = text.slice(at);
+  const ch = text[at - 1];
+  let ms = TYPE_MS * (0.7 + Math.random() * 0.6);
+  if (".!?".includes(ch)) ms += 280;
+  else if (",;:".includes(ch)) ms += 120;
+  timer = setTimeout(step, ms);
+}
+
+function skip() {
+  if (at < text.length) { at = text.length - 1; clearTimeout(timer); step(); }
+}
+said.addEventListener("click", skip);
+document.addEventListener("keydown", e => { if (e.key === "Escape") { skip(); $("past").classList.remove("on"); } });
+
+function startDots() {
+  let n = 0;
+  stopDots();
+  text = ""; at = 0;
+  const go = async () => {
+    n = n % 3 + 1;
+    let extra = "";
+    if (n === 1) {
+      try {
+        const r = await (await fetch("api/line")).json();
+        if (r.waiting > 1) extra = `  (Bob is talking to ${r.waiting - 1} other friend${r.waiting > 2 ? "s" : ""} first)`;
+      } catch (e) {}
+      said.dataset.extra = extra;
+    }
+    said.innerHTML = '<span class="dim"></span>';
+    said.firstChild.textContent = "hmm" + ".".repeat(n) + (said.dataset.extra || "");
+  };
+  go();
+  dots = setInterval(go, 450);
+}
+function stopDots() { clearInterval(dots); dots = null; }
+
+// --- talking to the server ---
+
+async function post(path, data) {
+  const r = await fetch(path, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(data)});
+  if (!r.ok) throw new Error(r.status);
+  return r.json();
+}
+
+async function hello() {
+  try {
+    const r = await post("api/start", {});
+    id = r.id;
+    setMood(r.mood);
+    show(r.reply);
+  } catch (e) {
+    setMood("sad");
+    show("I can't find my computer house... try again in a bit?");
+  }
+}
+
+async function send(line) {
+  line = line.trim();
+  if (!line || busy) return;
+  note.textContent = "";
+  skip();
+  if (line.toLowerCase() === "/clear") { clearTimeout(timer); said.textContent = ""; text = ""; return; }
+  busy = true;
+  const slow = setTimeout(startDots, 150);
+  try {
+    let r = await post("api/say", {id, text: line});
+    if (r.gone) {
+      const s = await post("api/start", {});
+      id = s.id;
+      r = await post("api/say", {id, text: line});
+    }
+    clearTimeout(slow); stopDots();
+    if (r.note) note.textContent = r.note;
+    if (r.help) { said.innerHTML = "<pre></pre>"; said.firstChild.textContent = r.help; text = ""; }
+    if (r.history) { $("pastTxt").textContent = r.history; $("past").classList.add("on"); said.textContent = ""; }
+    if (r.reply) { setMood(r.mood); show(r.reply); }
+  } catch (e) {
+    clearTimeout(slow); stopDots();
+    setMood("sad");
+    show("I can't hear you... is the internet on?");
+  }
+  busy = false;
+  box.focus();
+}
+
+$("form").addEventListener("submit", e => {
+  e.preventDefault();
+  const v = box.value;
+  box.value = "";
+  send(v);
+});
+document.querySelectorAll("[data-say]").forEach(b => b.addEventListener("click", () => send(b.dataset.say)));
+$("pastX").addEventListener("click", () => $("past").classList.remove("on"));
+
+setMood("happy");
+hello();
+box.focus();
+</script>
+</body>
+</html>
