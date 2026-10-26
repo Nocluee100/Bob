@@ -1,9 +1,59 @@
-# Welcome to BOB
+# Say hi to Bob!!
 
-This is a very rough and basic README for now. It will be updated in the future!
+![Bob going nom nom nom](Bob.png)
 
-To use Bob, make sure you have Ollama and Qwen3:4B installed and that port 11434 is free. (You can change this in the config file :D)
+```
+(     ^_^     )
+(>           <)
+```
 
-Then, run the main.py file. 
+Bob is a 5 and a half year old boy who lives inside a computer with his mom and dad. You can talk to him, feed him, poke him and tuck him into bed.
 
-(Again, this is a rough README, a new one IS comign soon.
+He loves chicken biryani and White Monster. He does NOT like veg biryani ("that's just pulao!"), and he thinks most vegetables are yucky. If you're mean to him he cries until you say sorry.
+
+## What you need
+
+- Python 3.0
+- [Ollama](https://ollama.com), running, with Qwen3:4B pulled:
+  ```
+  ollama pull qwen3:4b
+  ```
+- tkinter, for Bob's window. Most Pythons come with it. If yours doesn't, Bob just opens in the terminal instead. On a Mac you can get it with `brew install python-tk`.
+
+Bob talks to Ollama at `http://localhost:11434`. You can change this in `config.py` :D
+
+## Running Bob
+
+**In his own window** (black screen, Bob in the middle, his reply typed out under him):
+```
+python3 main.py
+```
+
+**In the terminal:**
+```
+python3 main.py --text
+```
+
+**In your browser:**
+```
+python3 web.py
+```
+Then open http://localhost:7860. Everyone who opens the page gets their own Bob.
+
+## Things you can type
+
+There are six commands for bob, you can view them with the /help command. (Which is one of them!)
+
+Saying goodnight (or "so jao") also puts him to bed.
+
+## Settings
+
+Everything is in `config.py`. Feel free to customise the config file. While I have built him around qwen3:4b, feel free to change the AI model.
+
+For example: `BOB_MODEL=qwen3:1.7b python3 main.py`
+
+## Important note
+
+Bob forgets everything after every session. Basically, clsosing and restarting him wipes his memory.
+
+Please do give feedback!
