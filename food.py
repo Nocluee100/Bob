@@ -1,11 +1,9 @@
 import random, re
 
-# biryani spellings people actually type
 BIRYANI = r"b(i|e)r(i|y|iy|ee)?(a|aa)?n(i|y|ee)"
 
 PULAO_RE = re.compile(rf"\b(veg|vegetable|veggie|paneer|aloo|mushroom|soya)\s+{BIRYANI}\b|\bpul(a|l)?(o|v|w)\b|\bpilaf\b", re.I)
 BIRYANI_RE = re.compile(rf"\b((chicken|mutton|egg|hyderabadi|lucknowi|kolkata|dum|prawn|fish)\s+)?{BIRYANI}\b", re.I)
-# the drink, not the thing under the bed
 MONSTER_RE = re.compile(r"\b(white\s+monster|monster\s+(ultra|white|energy|drink|can)s?)\b", re.I)
 
 SNACKS = [
@@ -47,7 +45,6 @@ ASKS_FAV = re.compile(r"\b(fav\w* (food|drink|snack|thing to eat)|what (do|would
                       r"what did (you|u) eat|what('?d| would) (you|u) (like|want) to eat)\b")
 
 
-# should bob's own food likes come up? only if they ask about his food
 def about_bobs_food(msg):
     low = (msg or "").lower()
     return mentions(low) or bool(ASKS_FAV.search(low))
@@ -67,10 +64,8 @@ VEGGIES = re.compile(r"\b(broccoli|spinach|palak|karela|bitter gourd|cabbage|cau
                      r"brinjal|baingan|eggplant|lauki|bhindi|okra|salad|lettuce|cucumber|veggies|vegetables?|sprouts|kale|celery|onions?)\b", re.I)
 
 
-# bob lives in a computer, so these are actually snacks for him
 PC_FOOD = re.compile(r"\b(ram|wifi|wi-fi|bytes?|megabytes?|gigabytes?|data|pixels?|usb|batter(y|ies)|electricity|cables?|emojis?|"
                      r"memes?|gifs?|internet|bluetooth|charger|cookies? from (the )?(browser|internet|website))\b", re.I)
-# not food at all
 THING = re.compile(r"\b(shoes?|socks?|chappals?|slippers?|homework|books?|pencils?|erasers?|crayons?|soap|toothpaste|paper|"
                    r"rocks?|stones?|sand|mud|dirt|bugs?|worms?|spiders?|phones?|remote|keys|coins?|money|tissues?|hair|"
                    r"brother|sister|cat|dog|chair|table|lego|legos|glue|plastic|nothing|air)\b", re.I)
@@ -91,7 +86,6 @@ def random_snack():
     return random.choice(SNACKS)
 
 
-# "should i make you halwa?", "want some ice cream?" - it's coming, not here yet
 LATER_RE = re.compile(r"\b(want|wanna|should i|shall i|should \w+ (make|get|bring|cook|order)|do (you|u) want|would (you|u) like|can i (get|make|bring|order) (you|u)|"
                       r"i'?ll (make|get|bring|order|cook)|i will (make|get|bring|order|cook)|let me (make|get|bring))\b", re.I)
 
@@ -109,15 +103,12 @@ def later(msg):
     return None
 
 
-# "here's some biryani for you!" -> "biryani"
 def offered(msg):
     if later(msg):
         return None
-    # "a goldfish named biscuit" is a name, not a snack
     msg = re.sub(r"\b(named|called|name is|names?)\s+\w+", " ", msg or "", flags=re.I)
     if not OFFER_RE.search(msg or ""):
         return None
-    # "how do u have an apple??" is asking, not giving
     if re.search(r"\b(how|why|where|what|when|who)\b", msg, re.I) and "?" in msg or re.search(r"[\U0001F914\U0001F928]", msg):
         return None
     low = msg.lower()
@@ -169,7 +160,6 @@ LIKES_PULAO = re.compile(
     rf"\b((veg\w*|paneer)\s+{BIRYANI}|pul(a|l)?(o|v|w))\b[^.!?]{{0,20}}\b(is|was|tastes)\s+(the best|so good|yummy|yum|delicious|tasty|good|great|amazing)", re.I)
 
 
-# "veg biryani is the best!" from bob = no
 def likes_pulao(txt):
     for s in re.findall(r"[^.!?]+[.!?]*", txt or ""):
         if LIKES_PULAO.search(s) and not re.search(rf"\b{NO}\b", s, re.I):
@@ -185,7 +175,6 @@ def pushes_meat(txt):
     return bool(PUSH_RE.search(txt or ""))
 
 
-# "my chicken biryani is yucky" - never
 FAV_BAD = re.compile(rf"(?<!veg )(?<!paneer )(?<!vegetable )\b({BIRYANI}|white monster)\b[^.!?]{{0,15}}[.!?]?\s*(it\s+)?(is|are|was|'s|tastes?)\s+(so\s+|really\s+)?(yucky|gross|bad|disgusting|icky|eww)", re.I)
 
 
@@ -196,9 +185,11 @@ def dislikes_fav(txt):
 ATE = re.compile(r"\bi (just |already )?(ate|had|drank|eated|gobbled)\b|\bi'?ve (just )?(eaten|had)\b", re.I)
 
 
-# "i ate biryani for lunch!" when nobody fed him
 def claims_ate(txt):
+    meals = FOODS + ["snack", "food", "lunch", "dinner", "breakfast"]
     for s in re.findall(r"[^.!?]+", txt or ""):
-        if ATE.search(s) and (mentions(s) or any(re.search(rf"\b{re.escape(f)}", s, re.I) for f in FOODS + ["snack", "food", "lunch", "dinner", "breakfast"])):
+        if not ATE.search(s):
+            continue
+        if mentions(s) or any(re.search(rf"\b{re.escape(f)}", s, re.I) for f in meals):
             return True
     return False
