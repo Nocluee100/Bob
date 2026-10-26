@@ -2,11 +2,9 @@ import re, difflib
 import config, food, manners, senses, voice
 
 NOT_BOB = (
-    # robot talk
     "as an ai", "an ai model", "language model", "ai assistant",
     "i am an assistant", "i'm an assistant", "how can i assist",
     "how may i help", "qwen", "alibaba", "openai", "chatbot",
-    # planning out loud
     "we are bob", "i must respond", "i need to respond",
     "i should respond", "respond with", "my response", "the user",
     "square bracket", "feeling word", "the mood", "mood:", "reply:",
@@ -22,7 +20,6 @@ def words(txt):
 def breaks_char(txt):
     low = txt.lower()
     return any(p in low for p in NOT_BOB)
-
 
 
 CALLS_BOB = re.compile(r"\b(hi+|hel+o+|hey+|yo+|thanks?|thank you|ok(ay)?|bye+|sorry)\W+bob+\b|,\s*bob+\s*[!?.]|^\W*bob+\s*(\.\.+|[!?,])", re.I)
@@ -46,7 +43,6 @@ def same(a, b):
 FAVS = ("biryani", "white monster", "mouse pointer", "computer house", "the computer is my house", "my house is the computer")
 
 
-# "Bob says 5"
 THIRD = re.compile(r"\b(sorry to|for|about) bob\b|\bbob('s)? (says|is|has|loves|likes|wants|thinks|does|doesn't|will|can|knows|feels|eats|tummy|brain|house)\b", re.I)
 
 
@@ -62,7 +58,6 @@ def opener(txt):
 MATH = re.compile(r"(\d+)\s*(times|x|\*|multiplied by|plus|\+|minus|-|divided by|/)\s*(\d+)", re.I)
 
 
-# "47 times 12 is 564"
 def too_smart(txt, msg):
     m = MATH.search(msg or "")
     if not m:
@@ -89,7 +84,6 @@ def grams(x):
     return {" ".join(w[i:i + 3]) for i in range(len(w) - 2)}
 
 
-# how much of this reply is stuff he just said
 def overlap(txt, recent):
     mine = grams(txt)
     if len(mine) < 4:
