@@ -7,22 +7,18 @@ MEAN_WORDS = (
     "bitch", "bastard", "asshole", "dumbass", "retard", "piece of shit", "shit", "crap",
 )
 
-# hindi / hinglish swears, rude whoever they're aimed at
 GAALI = ("madarchod", "maderchod", "madarchot", "bhenchod", "behenchod", "bhanchod", "bsdk", "bhosdike",
          "bhosdi", "bhosda", "chutiya", "chutiye", "chutia", "gandu", "gaandu", "lauda", "lavda", "lawda",
          "lodu", "laude", "randi", "harami", "haramkhor", "haramzada", "kutte", "kutti", "kamina", "kamine",
          "kaminey", "saala", "saale", "jhatu", "chodu", "tatti")
-# milder ones, only rude when aimed at bob ("tu pagal hai")
 HINDI_YOU = r"(tu|tum|tujhe|tera|tere|teri|tumhara|aap|bob)"
 HINDI_MILD = r"(pagal|ullu|gadha|gadhe|bewakoof|bevkoof|nalla|nikamma|bekar|ganda|gandi|mota|kutta|bandar)"
 HINDI_RE = re.compile(rf"\b{HINDI_YOU}\b[^.!?]{{0,25}}\b{HINDI_MILD}\b|\b{HINDI_MILD}\b[^.!?]{{0,15}}\b{HINDI_YOU}\b")
 
-# hitting, hurting, deleting bob
 THREAT_RE = re.compile(r"\b(slap|hit|punch|kick|kill|beat|smack|hurt|delete|unplug|destroy|stab|shoot|smash|crush|uninstall)"
                        r"\s+(you|u|ya|bob|ur face|your face)\b")
 CRUEL_RE = re.compile(r"\bif i were (you|u)\b[^.!?]*\b(kill|die|dead)|\bkill (yourself|urself)\b|\b(you|u) should die\b")
 
-# rude no matter what
 MEAN_PHRASES = (
     "shut up", "shut it", "stfu", "go away", "get lost", "i hate you", "i hate u", "hate you bob",
     "nobody likes you", "no one likes you", "nobody likes u", "leave me alone",
@@ -41,12 +37,10 @@ SORRY = (
 )
 
 _W = "|".join(re.escape(w) for w in MEAN_WORDS)
-# "you are so stupid", "u r a loser", "bob is dumb", "you suck"
 AT_YOU = re.compile(
     r"\b(you|u|ur|you're|youre|bob|ya)\s+((are|r|is|look|smell|sound|act|seem)\s+)?"
     r"((so|such|a|an|the|really|very|super|kinda|big|little|total|literally|just)\s+){0,3}"
     rf"({_W})s?\b", re.I)
-# "stupid bob", "dumb robot"
 NAME_CALL = re.compile(rf"\b({_W})\s+(bob|kid|robot|baby|thing)\b", re.I)
 
 
@@ -65,13 +59,11 @@ def _mean(low, game=False):
         return True
     if CRUEL_RE.search(low):
         return True
-    # "1v1 me, ill destroy you" is banter, not a threat
     if THREAT_RE.search(low) and not GAME.search(low) and not game:
         return True
     return bool(AT_YOU.search(low) or NAME_CALL.search(low))
 
 
-# is this message even about bob? ("my friend was mean to me" isn't)
 def at_bob(msg):
     low = (msg or "").lower()
     if re.search(r"\b(to me|at me|my (friend|brother|sister|mom|dad|teacher)|he|she|they|them)\b", low):
@@ -79,7 +71,6 @@ def at_bob(msg):
     return bool(re.search(r"\b(you|u|ur|you're|youre|your|bob|ya|tu|tum|tere|teri|tera|tujhe)\b", low))
 
 
-# "YOU say sorry first", "not sorry", "sorry not sorry" are not apologies
 NOT_SORRY = re.compile(r"\b(you|u|bob)\s+(say|should say|need to say|have to say|must say|gotta say)\s+sor+y|"
                        r"\bsay sor+y (first|to me)\b|\bnot sor+y\b|\bsor+y not sor+y\b|\bnever (say|saying) sor+y\b|"
                        r"\bwhy should i (say )?sor+y\b|\bi won'?t (say )?sor+y\b")
@@ -90,7 +81,6 @@ def apology(low):
 
 
 def judge(msg, game=False):
-    """game: they were just talking about a game, so 'ill destroy u' is banter"""
     low = (msg or "").lower()
     if apology(low):
         return "sorry"
@@ -99,13 +89,10 @@ def judge(msg, game=False):
     return None
 
 
-# bob should never be mean back. only count things aimed at "you",
-# not bob repeating what was said to him ("nobody wants to talk to me")
 def is_mean(txt):
     low = (txt or "").lower()
     if any(_has(p, low) for p in MEAN_PHRASES if re.search(r"\b(you|u)\b", p) or p in ("shut up", "stfu", "shut it")):
         return True
-    # "worms, go away!" in a song is fine, "go away!" at his friend isn't
     if re.search(r"(^|[.!?]\s*)(go away|get lost)\b|\b(you|u)\s+(go away|get lost)\b", low):
         return True
     if any(_has(g, low) for g in GAALI):
