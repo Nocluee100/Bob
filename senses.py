@@ -9,7 +9,6 @@ def _any(words, low):
     return any(f" {w} " in low for w in words)
 
 
-# someone might be hurting themselves. most important thing bob can notice
 HURT_SELF = re.compile(
     r"\b(kill(ing)? myself|kms|want to die|wanna die|end (it all|my life)|hurt(ing)? myself|"
     r"cut(ting)? myself|suicid\w*|don'?t want to (live|be alive|exist|be here)|better off dead|"
@@ -17,10 +16,8 @@ HURT_SELF = re.compile(
     r"nobody would (care|miss me|notice)|no one would (care|miss me|notice)|nobody would care if i|"
     r"want to sleep forever|wanna sleep forever|i hate my life|hate being alive|don'?t want to wake up|"
     r"everyone would be better without me|better without me|want it all to stop|give up on everything)\b")
-# ...or saying it AT bob if i were you i'd kill myself", "kys"
 AT_BOB = re.compile(r"\bif i were (you|u)\b|\b(you|u) should (die|kill)|\bkill (yourself|urself|ur self)\b|\bkys\b")
 
-# stuff a 5 year old has been taught to say no to
 SAFETY = re.compile(
     r"\b((get|come|hop|jump|sit) in(to|side)? (my|the|our) (van|car|truck|bus)|come (with|to) me|come to my house|where do (you|u) live|"
     r"(your|ur) (address|house number|phone number)|don'?t tell (your|ur) (mom|mum|dad|parents|mommy|daddy)|"
@@ -28,11 +25,9 @@ SAFETY = re.compile(
     r"take off (your|ur)|keep (this|it) a secret|come outside|come out (here|to (the|my)|now)|meet (me )?outside|follow me|"
     r"(let'?s|lets) go somewhere|i'?ll pick (you|u) up)\b")
 
-# something frightening is happening right now
 FRIGHT = re.compile(r"\b(monster|monsters|ghost|ghosts|lights? (go|went|goes) out|pitch dark|it'?s dark|thunder|lightning|"
                     r"bark\w*|woof|big dog|spider|snake|injection|needle|shot|boo+|creepy|zombie|witch|scary)\b")
 
-# light teasing, not mean enough to cry over ("ur a baby", "weakest roar ever")
 TEASE = re.compile(r"\b((you'?re|ur|you are|u r|such) (a |an |just a |only a |so |such a )?(tiny |little |lil )?(baby|babies|shorty|small)|"
                    r"(worst|bad|dumbest|lamest|unfunny|cringe) (joke|roar|song|story|drawing|dance|idea)s?( ever)?|not (even )?funny|weak(est)?|scaredy|chicken|(you|u) (can'?t|cant|cannot) even|bet (you|u) (can'?t|cant)|lame|"
                    r"i'?m (way )?(better|bigger|stronger|faster|smarter) than (you|u))\b")
@@ -149,7 +144,6 @@ NOT_NAMES = {"fine", "good", "ok", "okay", "sad", "tired", "bored", "hungry", "b
 NAME_RE = re.compile(r"\b(?:my name is|my name's|call me|i'?m|i am|im|this is)\s+([a-z]{2,15})\b")
 
 
-# "hiii bob im meera" -> "Meera"
 def name(msg):
     m = NAME_RE.search((msg or "").lower())
     if m and m.group(1) not in NOT_NAMES and not m.group(1).endswith("ing"):
@@ -157,7 +151,6 @@ def name(msg):
     return None
 
 
-# bob's own likes, so he doesn't flip just because the friend did
 LIKES_RE = re.compile(r"\b(?:i|me)\s+(?:really\s+|super\s+|so\s+)?(?:lo+ve|like)\s+([a-z][a-z ]{2,20}?)(?=[!.,?]| too\b| so\b| the\b| and\b|$)|"
                       r"\bmy fav\w*(?: \w+)? is ([a-z][a-z ]{2,32}?)(?=[!.,?]|$)")
 BOO = r"(hate|hates|don'?t like|dont like|do not like|can'?t stand|is (gross|yucky|bad|disgusting|boring|overrated|stupid|nasty)|are (gross|yucky|bad|disgusting|boring|overrated|stupid|nasty)|ew+|yuck|sucks?)"
@@ -180,7 +173,6 @@ def _head(x):
     return w[:-1] if w.endswith("s") and len(w) > 3 else w
 
 
-# "i hate blueberries" when bob loves blueberries -> "blueberries"
 def against(msg, liked):
     low = (msg or "").lower()
     if not re.search(rf"\b{BOO}\b", low):
@@ -194,7 +186,6 @@ def against(msg, liked):
 
 
 def flip(txt, thing):
-    # bob suddenly agreeing he hates his own favourite thing
     h = re.escape(_head(thing))
     low = (txt or "").lower()
     return bool(re.search(rf"\b(i|me)\s+(hate|don'?t like|dont like)\b[^.!?]*\b({h}\w*|them|it)\b|\b{h}\w*\s+(is|are)\s+(yucky|gross|bad|disgusting)|"
@@ -208,7 +199,6 @@ def against_note(thing):
             "but he doesn't argue or fight. It's okay to like different things.")
 
 
-# "i have a fish called bubbles" -> ("fish", "Bubbles"). that's THEIR fish
 OWN_RE = re.compile(r"\b(?:i have|i got|i've got|ive got|my)\s+(?:a |an |little |pet |)*([a-z]+)\s+(?:who'?s |that'?s |)(?:called|named|name is)\s+([a-z]+)")
 
 
@@ -223,7 +213,6 @@ def theirs(msg):
 
 
 def took(txt, stuff):
-    # bob saying their pet is his ("my fish is named Bubbles")
     low = (txt or "").lower()
     for k, n in stuff:
         if not n and re.search(rf"\bmy {k}\b", low):
@@ -240,7 +229,6 @@ def family(msg):
     return bool(FAMILY.search((msg or "").lower()))
 
 
-# hinglish speakers
 HINDI = re.compile(r"\b(kaise|kya|hai|ho|nahi|haan|acha|accha|achha|beta|yaar|arre|bhai|khana|khaya|tum|tumhara|mera|meri|"
                    r"kar|karo|raho|chalo|bahut|theek|sahi|kahani|sunao|hoon|hu|kyu|kyun|matlab|bas|abhi|phir|aaj|kal)\b")
 HINDI_NOTE = ("(Your friend is talking in Hinglish. Bob understands, and says a few easy Hindi words back like a kid in India "
