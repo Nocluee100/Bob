@@ -1,6 +1,6 @@
 # Say hi to Bob!!
 
-![Bob going nom nom nom](Bob.png)
+![Bob going nom nom nom](bob.png)
 
 ```
 (     ^_^     )
