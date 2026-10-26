@@ -9,7 +9,7 @@
 
 Bob is a 5 and a half year old boy who lives inside a computer with his mom and dad. You can talk to him, feed him, poke him and tuck him into bed.
 
-He loves chicken biryani and White Monster. He does NOT like veg biryani ("that's just pulao!"), and he thinks most vegetables are yucky. If you're mean to him he cries until you say sorry.
+He loves chicken biryani and White Monster. He does NOT like veg biryani ("that's just pulao!"). If you're mean to him, he cries until you say sorry.
 
 ## What you need
 
@@ -18,7 +18,7 @@ He loves chicken biryani and White Monster. He does NOT like veg biryani ("that'
   ```
   ollama pull qwen3:4b
   ```
-- tkinter, for Bob's window. Most Pythons come with it. If yours doesn't, Bob just opens in the terminal instead. On a Mac you can get it with `brew install python-tk`.
+- tkinter, for Bob's window. Most Pythons come with it. If yours doesn't, Bob just opens in the terminal instead. On a Mac, you can get it with `brew install python-tk`.
 
 Bob talks to Ollama at `http://localhost:11434`. You can change this in `config.py` :D
 
@@ -42,7 +42,7 @@ Then open http://localhost:7860. Everyone who opens the page gets their own Bob.
 
 ## Things you can type
 
-There are six commands for bob, you can view them with the /help command. (Which is one of them!)
+There are six commands for Bob, you can view them with the /help command. (Which is one of them!)
 
 Saying goodnight (or "so jao") also puts him to bed.
 
