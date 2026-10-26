@@ -29,7 +29,6 @@ def parse(txt):
     if not w.startswith("/"):
         return None, txt
     cmd, log = CMDS.get(w, ("unknown", None))
-    # /feed veg biryani
     if cmd == "feed" and len(parts) > 1 and parts[1].strip():
         return cmd, parts[1].strip()
     return cmd, None if cmd == "feed" else log
