@@ -32,23 +32,26 @@ def cls():
 SAD_WORDS = re.compile(r"cry|sad|sniff|tear|scared|hurt|sorry|wah+|boo ?hoo|miss|lonely|ouch|no fair|don'?t want|nooo", re.I)
 
 
-# chat
+# one chat with bob
+
+class Chat:
     def __init__(self, clock=time.monotonic):
         self.mem = Memory()
         self.bob = Mood(clock)
         self.recent = deque(maxlen=config.RECENT_N)
         self.used = set()
-        self.joke = None     
-        self.ate = None      
-        self.pulao = 0       
-        self.veg = False     
-        self.food_talk = 99  
+        self.joke = None
+        self.ate = None
+        self.pulao = 0
+        self.veg = False
+        self.food_talk = 99
         self.name = None
-        self.care = 0        
+        self.care = 0
         self.liked = deque(["chicken biryani", "white monster"], maxlen=12)
-        self.stand = None    
+        self.stand = None
+        self.stuff = []
         self.fun = comedy.Director(random)
-        self.event = None    
+        self.event = None
         self.pokes = 0
         self.mem.add("Bob", config.HELLO, mood=self.bob.mood)
         self.recent.append(config.HELLO)
@@ -74,7 +77,7 @@ SAD_WORDS = re.compile(r"cry|sad|sniff|tear|scared|hurt|sorry|wah+|boo ?hoo|miss
             return checker.problem(t, recent, msg, food_ok, upset, self.veg)
         temp = None
         picked, txt, flags = None, "", {}
-        okish = None   
+        okish = None
         for n in range(config.RETRIES + 1):
             raw = brain.ask(personality.build(turns, msg, sit), temp)
             picked, txt, flags = cleaner.clean(raw, self.bob.mood)
@@ -83,14 +86,12 @@ SAD_WORDS = re.compile(r"cry|sad|sniff|tear|scared|hurt|sorry|wah+|boo ?hoo|miss
                 return picked, txt, flags
             if checker.soft(issue):
                 if okish is not None:
-                    
                     return picked, txt, flags
                 okish = (picked, txt, flags)
             if issue not in sit:
                 sit = (sit + " " + issue).strip()
             temp = config.TEMP + config.RETRY_BUMP
 
-    
         raw = brain.ask(personality.build([], msg, sit), config.TEMP)
         picked, txt, flags = cleaner.clean(raw, self.bob.mood)
         issue = check(txt, [])
@@ -100,11 +101,10 @@ SAD_WORDS = re.compile(r"cry|sad|sniff|tear|scared|hurt|sorry|wah+|boo ?hoo|miss
             return okish
         return picked, "...", flags
 
-
     def notes(self, msg, forced):
         kinds = senses.read(msg)
         if self.bob.upset:
-            kinds = [k for k in kinds if k != "tease"]   
+            kinds = [k for k in kinds if k != "tease"]
         if "hurt_self" in kinds:
             self.care = 6
         elif self.care:
@@ -113,7 +113,7 @@ SAD_WORDS = re.compile(r"cry|sad|sniff|tear|scared|hurt|sorry|wah+|boo ?hoo|miss
         if senses.veg(msg):
             self.veg = True
         self.name = senses.name(msg) or self.name
-        for x in ([] if "sad" in kinds else senses.theirs(msg)):    # don't joke about the cat that died
+        for x in ([] if "sad" in kinds else senses.theirs(msg)):
             if x not in self.stuff:
                 self.stuff = (self.stuff + [x])[-6:]
         out = [senses.notes(kinds)]
@@ -136,7 +136,7 @@ SAD_WORDS = re.compile(r"cry|sad|sniff|tear|scared|hurt|sorry|wah+|boo ?hoo|miss
             out.append(f"(Bob keeps talking about {', '.join(stuck[:2])}. This time he doesn't bring it up, he talks about what they said.)")
 
         if self.joke and len(msg.split()) > 8 and "who" not in msg.lower():
-            self.joke = None    # they moved on
+            self.joke = None
         if senses.no_jokes(kinds) or self.care or self.bob.upset:
             self.joke = None
         elif self.joke:
@@ -173,14 +173,12 @@ SAD_WORDS = re.compile(r"cry|sad|sniff|tear|scared|hurt|sorry|wah+|boo ?hoo|miss
                        "He asks it and lets THEM answer, he doesn't answer it himself.")
         return " ".join(x for x in out if x)
 
-
     def trim_joke(self, txt):
         if not self.joke:
             return txt
         j, step = self.joke
         lines = topics.joke_lines(j)
         if not j.startswith("knock") and step == 0:
-    
             i = txt.lower().find(lines[0].lower().rstrip("?"))
             return txt if i < 0 else txt[:i + len(lines[0])].rstrip(" ,.!?") + "?"
         if not j.startswith("knock") or step == len(lines) - 1:
@@ -215,7 +213,6 @@ SAD_WORDS = re.compile(r"cry|sad|sniff|tear|scared|hurt|sorry|wah+|boo ?hoo|miss
             forced, sit = None, comedy.POKES[min(self.pokes, len(comedy.POKES)) - 1]
         else:
             line = arg
-   
             offer = None if "safety" in senses.read(arg) else food.offered(arg)
             if offer:
                 forced, sit = self.bob.feed(offer)
@@ -235,7 +232,7 @@ SAD_WORDS = re.compile(r"cry|sad|sniff|tear|scared|hurt|sorry|wah+|boo ?hoo|miss
         food_ok = (cmd == "feed" or forced == "eating" or self.bob.hungry or self.bob.hint
                    or self.food_talk == 0)
         if self.bob.upset and not self.bob.hungry and cmd != "feed":
-            food_ok = None   
+            food_ok = None
         fed = cmd == "feed" or forced == "eating"
         if food_ok and not fed:
             extra = system_prompt.FOOD_NOTE
@@ -254,7 +251,7 @@ SAD_WORDS = re.compile(r"cry|sad|sniff|tear|scared|hurt|sorry|wah+|boo ?hoo|miss
         upset = self.bob.upset and cmd != "feed"
         picked, txt, flags = self.reply(turns, line, forced, sit, food_ok, upset)
         if picked in ("crying", "sad") and not forced and not SAD_WORDS.search(txt):
-            picked = "happy"  
+            picked = "happy"
         m = self.bob.settle(forced, picked, flags.get("mean"), flags.get("sorry"), line)
         txt = voice.detic(txt, self.recent)
         txt = voice.no_name_start(txt, self.recent, self.name)
@@ -275,9 +272,9 @@ def status(bob):
         note("Bob is still waiting for a sorry...")
 
 
-# main loop
+# terminal mode
 
-def main():
+def text_mode():
     chat = Chat()
     bob = chat.bob
 
@@ -340,6 +337,18 @@ def main():
         say(m, txt, animate=True)
 
     chat.mem.wipe()
+
+
+def main():
+    if "--text" not in sys.argv:
+        try:
+            import window
+        except ImportError:
+            print("(no tkinter here, so Bob is in the terminal. On a Mac: brew install python-tk)")
+        else:
+            window.Screen(Chat()).run()
+            return
+    text_mode()
 
 
 if __name__ == "__main__":
