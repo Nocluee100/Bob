@@ -1,6 +1,5 @@
 import random, re
 
-
 PLAIN = "plain"
 
 TRICKS = {
@@ -21,6 +20,7 @@ TRICKS = {
     "grownup_phrase": "Bob uses one grown-up phrase he heard from his mom or dad, but in a place where it doesn't really fit.",
 }
 
+# when they set it up
 YES_AND = ("They're being silly or playing pretend. Bob loves it: he laughs and adds ONE more silly thing to their idea, "
            "a little bigger. He never answers their joke like it's serious.")
 EXPLORE = ("They asked why. Bob gives the funny, very serious reason, like it really happened to him once when he was "
@@ -41,6 +41,7 @@ GROWN = re.compile(r"\b(job|work|office|boss|tax|taxes|bill|bills|rent|salary|mo
                    r"date|dating|college|exam|exams|homework|traffic|news|doctor|dentist|loan|insurance|coffee|wifi password)\b", re.I)
 BORED = re.compile(r"\b(i'?m bored|im bored|so bored|boring|let'?s do something)\b", re.I)
 
+# callbaks
 FACTS = [
     (re.compile(r"\b(?:i'?m|i am|im)\s+(\d{1,2})\b"), "they are {} years old"),
     (re.compile(r"\bi (?:love|like|really like)\s+([a-z][a-z ]{2,25}?)(?=[.,!?]|$| and | but )"), "they like {}"),
@@ -58,11 +59,11 @@ SKIP = {"Bob", "I", "Mummy", "Mommy", "Mom", "Dad", "Daddy", "Papa", "White", "M
 class Director:
     def __init__(self, rng=None):
         self.rng = rng or random.Random()
-        self.last = []          
-        self.facts = []         
-        self.bits = []          
+        self.last = []
+        self.facts = []
+        self.bits = []
         self.turn = 0
-        self.used_back = {} 
+        self.back = {}
 
     def learn(self, msg, reply=None):
         low = (msg or "").lower()
@@ -76,25 +77,26 @@ class Director:
                     self.facts = (self.facts + [(f, self.turn)])[-8:]
         for m in NAMED.finditer(reply or ""):
             x = m.group(1)
-            if x not in SKIP and all(x != b for b, _ in self.bits):
+            if x in SKIP:
+                continue
+            if all(x != b for b, _ in self.bits):
                 self.bits = (self.bits + [(x, self.turn)])[-6:]
 
     def _callback(self):
         pool = [(x, t) for x, t in self.bits + self.facts
-                if self.turn - t >= 4 and self.turn - self.used_back.get(x, -99) >= 8]
+                if self.turn - t >= 4 and self.turn - self.back.get(x, -99) >= 8]
         if not pool:
             return None
         x, _ = self.rng.choice(pool)
-        self.used_back[x] = self.turn
+        self.back[x] = self.turn
         if x.startswith("they ") or x.startswith("their "):
             return (f"Earlier your friend told you: {x}. Bob suddenly remembers it now and brings it back in a new, "
                     "funny way that fits what they just said.")
         return f"Earlier Bob talked about '{x}'. If it fits, he brings it back now in a new, sillier way."
 
     def pick(self, msg, quiet=False):
-        """quiet: something serious is going on, no funny business"""
         self.turn += 1
-        if quiet or self.turn <= 1: 
+        if quiet or self.turn <= 1:
             self.last.append(PLAIN)
             return PLAIN, ""
         low = msg or ""
@@ -118,13 +120,17 @@ class Director:
             if cb:
                 return self._use("callback", cb)
         left = [k for k in TRICKS if k not in self.last[-6:]]
-        k = self.rng.choice(left or list(TRICKS))
+        if not left:
+            left = list(TRICKS)
+        k = self.rng.choice(left)
         return self._use(k, TRICKS[k])
 
     def _use(self, k, note):
         self.last = (self.last + [k])[-10:]
         return k, "Funny idea for this reply (use it on what they just said, don't just say it): " + note
 
+
+# tuff that just happens
 EVENTS = [
     "Bob has the hiccups right now. Every reply has a *hic* in it until they stop.",
     "His mom just called him from the other room. He says he'll be right back, then comes back and tells them what she wanted.",
@@ -137,6 +143,7 @@ EVENTS = [
 
 def event(rng):
     return rng.choice(EVENTS)
+
 
 POKES = [
     "They poked Bob. It tickles! He giggles.",
